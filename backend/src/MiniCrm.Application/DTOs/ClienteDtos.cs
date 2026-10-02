@@ -14,7 +14,8 @@ public record ClienteListItemDto(
     string AsesorNombre,
     DateTime? ProximoContacto,
     DateTime FechaActualizacion,
-    bool SeguimientoVencido);
+    bool SeguimientoVencido,
+    bool Eliminado);
 
 public record ClienteDetailDto(
     int Id,
@@ -29,7 +30,8 @@ public record ClienteDetailDto(
     DateTime? ProximoContacto,
     DateTime FechaCreacion,
     DateTime FechaActualizacion,
-    bool SeguimientoVencido);
+    bool SeguimientoVencido,
+    bool Eliminado);
 
 public record CrearClienteRequest(
     string Nombre,

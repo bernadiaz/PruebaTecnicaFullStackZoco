@@ -13,7 +13,8 @@ export function getClientes(
   search?: string,
   estado?: EstadoCliente | "",
   asesorId?: number | "",
-  page = 1
+  page = 1,
+  soloEliminados = false
 ) {
   const params = new URLSearchParams();
   if (search?.trim()) {
@@ -26,6 +27,9 @@ export function getClientes(
     params.set("asesorId", String(asesorId));
   }
   params.set("page", String(page));
+  if (soloEliminados) {
+    params.set("soloEliminados", "true");
+  }
   return http.get<PagedResult<ClienteListItem>>(`/clientes?${params.toString()}`);
 }
 
@@ -39,6 +43,14 @@ export function createCliente(payload: ClientePayload) {
 
 export function updateCliente(id: number, payload: ClientePayload) {
   return http.put<ClienteDetail>(`/clientes/${id}`, payload);
+}
+
+export function deleteCliente(id: number) {
+  return http.delete(`/clientes/${id}`);
+}
+
+export function restoreCliente(id: number) {
+  return http.post<ClienteDetail>(`/clientes/${id}/restaurar`, {});
 }
 
 export function getGestiones(clienteId: number) {

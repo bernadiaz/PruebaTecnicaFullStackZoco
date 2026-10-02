@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { createGestion, getCliente, getGestiones } from "../api/clientes";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { createGestion, deleteCliente, getCliente, getGestiones, restoreCliente } from "../api/clientes";
 import { ApiError } from "../api/http";
 import { Alert } from "../components/Alert";
 import { EstadoBadge } from "../components/EstadoBadge";
@@ -12,6 +12,7 @@ import { ESTADOS, TIPOS_CONTACTO } from "../types";
 export function ClienteDetallePage() {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [cliente, setCliente] = useState<ClienteDetail | null>(null);
   const [gestiones, setGestiones] = useState<Gestion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +23,8 @@ export function ClienteDetallePage() {
       : null
   );
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     tipoContacto: "Llamada" as TipoContacto,
@@ -54,6 +57,9 @@ export function ClienteDetallePage() {
 
   useEffect(() => {
     void load();
+    if (location.state && typeof location.state === "object") {
+      navigate(location.pathname + location.search, { replace: true, state: null });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -94,6 +100,47 @@ export function ClienteDetallePage() {
     }
   }
 
+  async function onDelete() {
+    if (!id || deleting) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "¿Dar de baja este cliente? No se borra de la base: deja de verse en el listado y en los indicadores."
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteCliente(Number(id));
+      navigate("/", { replace: true, state: { deleted: true } });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo dar de baja el cliente.");
+      setDeleting(false);
+    }
+  }
+
+  async function onRestore() {
+    if (!id || restoring) {
+      return;
+    }
+
+    setRestoring(true);
+    setError(null);
+    try {
+      await restoreCliente(Number(id));
+      setSuccess("El cliente se reactivó correctamente.");
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "No se pudo reactivar el cliente.");
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   if (loading) {
     return <Alert variant="info">Cargando detalle del cliente...</Alert>;
   }
@@ -112,19 +159,48 @@ export function ClienteDetallePage() {
           <h1 className="mt-2 text-2xl font-semibold">{cliente.nombre}</h1>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <EstadoBadge estado={cliente.estado} label={cliente.estadoNombre} />
-            {cliente.seguimientoVencido && (
+            {cliente.seguimientoVencido && !cliente.eliminado && (
               <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700">
                 Seguimiento vencido
               </span>
             )}
+            {cliente.eliminado && (
+              <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-medium text-slate-700">
+                Dado de baja
+              </span>
+            )}
           </div>
         </div>
-        <Link
-          to={`/clientes/${cliente.id}/editar`}
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50"
-        >
-          Editar cliente
-        </Link>
+        <div className="flex gap-2">
+          {!cliente.eliminado && (
+            <>
+              <Link
+                to={`/clientes/${cliente.id}/editar`}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50"
+              >
+                Editar cliente
+              </Link>
+              <button
+                type="button"
+                onClick={() => void onDelete()}
+                disabled={deleting}
+                className="rounded-md border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100 disabled:opacity-60"
+              >
+                {deleting ? "Dando de baja..." : "Dar de baja"}
+              </button>
+            </>
+          )}
+          {cliente.eliminado && (
+            <button
+              type="button"
+              onClick={() => void onRestore()}
+              disabled={restoring}
+              className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-60"
+            >
+              {restoring ? "Reactivando..." : "Reactivar cliente"}
+            </button>
+          )}
+        </div>
       </div>
 
       {error && <Alert variant="error">{error}</Alert>}
@@ -139,6 +215,11 @@ export function ClienteDetallePage() {
         <p><span className="text-slate-500">Última actualización:</span> {formatDateTime(cliente.fechaActualizacion)}</p>
       </section>
 
+      {cliente.eliminado ? (
+        <Alert variant="info">
+          Este cliente está dado de baja. Reactivalo para editarlo o registrar gestiones.
+        </Alert>
+      ) : (
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Nueva gestión</h2>
         <form onSubmit={onSubmit} className="mt-4 grid gap-4 md:grid-cols-2">
@@ -202,6 +283,7 @@ export function ClienteDetallePage() {
           </div>
         </form>
       </section>
+      )}
 
       <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Historial de gestiones</h2>

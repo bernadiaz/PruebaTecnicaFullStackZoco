@@ -39,6 +39,18 @@ Content-Type: application/json
   "asesorId": 1
 }
 
+### Baja lógica
+DELETE http://localhost:5088/api/clientes/1
+
+### Listado de dados de baja
+GET http://localhost:5088/api/clientes?soloEliminados=true
+
+### Reactivar
+POST http://localhost:5088/api/clientes/1/restaurar
+Content-Type: application/json
+
+{}
+
 ### Historial
 GET http://localhost:5088/api/clientes/1/gestiones
 

@@ -16,5 +16,7 @@ public class Cliente
     public DateTime? ProximoContacto { get; set; }
     public DateTime FechaCreacion { get; set; }
     public DateTime FechaActualizacion { get; set; }
+    public bool Eliminado { get; set; }
+    public DateTime? FechaEliminacion { get; set; }
     public ICollection<Gestion> Gestiones { get; set; } = new List<Gestion>();
 }

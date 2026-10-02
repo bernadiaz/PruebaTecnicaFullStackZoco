@@ -33,6 +33,7 @@ export interface ClienteListItem {
   proximoContacto: string | null;
   fechaActualizacion: string;
   seguimientoVencido: boolean;
+  eliminado: boolean;
 }
 
 export interface ClienteDetail extends ClienteListItem {
