@@ -1,25 +1,14 @@
-# Mini CRM — Seguimiento Comercial
+# Mini CRM — Seguimiento Comercial por Bernabé Díaz Alvillos
 
 Aplicación full stack para que un asesor administre clientes, registre gestiones y consulte cuándo debe volver a contactarlos.
 
-Fue desarrollada como prueba técnica para Zoco, priorizando las funcionalidades obligatorias, reglas de negocio claras y una ejecución simple desde cero.
+Desarrollada como prueba técnica para Zoco. Prioriza las funcionalidades obligatorias, reglas de negocio claras y poder ejecutarla desde cero sin SQL Server ni servicios externos.
 
 ## Stack
 
-### Backend
+**Backend:** .NET 8 / ASP.NET Core Web API, Entity Framework Core (Code-First), SQLite, Swagger, xUnit + FluentAssertions.
 
-- .NET 8 / ASP.NET Core Web API
-- Entity Framework Core (Code-First)
-- SQLite
-- Swagger / OpenAPI
-- xUnit + FluentAssertions
-
-### Frontend
-
-- React 18 + Vite
-- TypeScript
-- Tailwind CSS
-- React Router
+**Frontend:** React 18, Vite, TypeScript, Tailwind CSS, React Router.
 
 ## Requisitos previos
 
@@ -27,18 +16,12 @@ Fue desarrollada como prueba técnica para Zoco, priorizando las funcionalidades
 - [Node.js](https://nodejs.org/) 18 o superior
 - Git
 
-No hace falta instalar SQL Server. La base SQLite se crea sola al iniciar la API.
+## Cómo ejecutar
+Primero descargar el repo desde: `https://github.com/bernadiaz/PruebaTecnicaFullStackZoco`
+Despues dirigirse a la carpeta descargada: cd ./PruebaTecnicaFullStackZoco
+Para levantar el proyecto localmente seguir los siguientes pasos:
 
-## Instalación y ejecución
-
-### 1. Clonar el repositorio
-
-```bash
-git clone <URL_DEL_REPOSITORIO>
-cd <NOMBRE_DEL_REPOSITORIO>
-```
-
-### 2. Backend
+### Backend
 
 ```bash
 cd backend
@@ -46,113 +29,131 @@ dotnet restore
 dotnet run --project src/MiniCrm.Api
 ```
 
-Al iniciar, la API:
+Al iniciar, la API aplica migraciones, carga el seed si la base está vacía y queda en `http://localhost:5088`.
 
-- aplica las migraciones
-- carga el seed si la base está vacía
-- queda disponible en `http://localhost:5088`
+- Swagger: http://localhost:5088/swagger
 
-Swagger: [http://localhost:5088/swagger](http://localhost:5088/swagger)
-
-La cadena de conexión está en `backend/src/MiniCrm.Api/appsettings.json`:
-
-```json
-"ConnectionStrings": {
-  "Default": "Data Source=minicrm.db"
-}
-```
-
-El archivo se crea en `backend/src/MiniCrm.Api/minicrm.db` y no se versiona. En Cursor/Visual Studio no aparece en el árbol porque `*.db` está en `.gitignore`; se ve en el Explorador de Windows o activando archivos excluidos.
-
-### 3. Frontend
+### Frontend
 
 En otra terminal:
 
 ```bash
 cd frontend
-npm install
+npm install 
 npm run dev
 ```
 
-La UI queda en [http://localhost:5173](http://localhost:5173). Vite proxea `/api` hacia `http://localhost:5088`.
+UI: http://localhost:5173. Vite proxea `/api` hacia `http://localhost:5088`.
 
-Si se quiere apuntar a otra URL:
+Opcional:
 
 ```bash
 VITE_API_URL=http://localhost:5088/api
 ```
 
-## Pruebas
+### Base de datos
+
+SQLite. Cadena de conexión en `backend/src/MiniCrm.Api/appsettings.json`. Al arrancar, el API resuelve el archivo contra su Content Root:
+
+`backend/src/MiniCrm.Api/minicrm.db`
+
+No se versiona. En Cursor o Visual Studio no aparece en el árbol porque `*.db` está en `.gitignore`. Se ve en el Explorador de Windows o activando archivos excluidos.
+
+Para regenerar el seed, borrar `minicrm.db` (y `-wal`/`-shm` si existen) y volver a iniciar la API.
+
+### Pruebas
 
 ```bash
 cd backend
 dotnet test
 ```
 
-Las pruebas cubren:
+Cubren CUIT duplicado (con o sin guiones), actualización de estado y próximo contacto al registrar una gestión, y detección de seguimientos vencidos.
 
-- rechazo de CUIT duplicado, aunque el formato cambie (`20-28333444-5` vs `20283334445`)
-- actualización del estado del cliente al registrar una gestión
-- actualización de la fecha de próximo contacto
-- detección de seguimientos vencidos
+## Estructura
+
+```
+backend/
+  src/MiniCrm.Api            # Controladores, Swagger, ProblemDetails, Program.cs
+  src/MiniCrm.Application    # Servicios, DTOs, validaciones de negocio
+  src/MiniCrm.Domain         # Entidades y enums
+  src/MiniCrm.Infrastructure # EF Core, migraciones, seed
+  tests/MiniCrm.Tests
+frontend/
+docs/requests.http
+```
+
+Los controladores no contienen reglas: delegan en servicios (`ClienteService`, `GestionService`, `DashboardService`, `AsesorService`).
 
 ## API
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/api/clientes` | Listado con `search` y `estado`. Ordena por próximo contacto |
+| GET | `/api/clientes` | Listado. Query: `search`, `estado`. Orden por próximo contacto |
 | GET | `/api/clientes/{id}` | Detalle. 404 si no existe |
-| POST | `/api/clientes` | Alta con validación de CUIT |
+| POST | `/api/clientes` | Alta |
 | PUT | `/api/clientes/{id}` | Edición |
 | GET | `/api/clientes/{id}/gestiones` | Historial, más reciente primero |
 | POST | `/api/clientes/{id}/gestiones` | Nueva gestión y actualización del cliente |
 | GET | `/api/dashboard/resumen` | Totales del panel |
-| GET | `/api/asesores` | Catálogo para el selector |
+| GET | `/api/asesores` | Catálogo para el selector (no hay ABM de asesores) |
 
-Errores en formato `ProblemDetails` (RFC 7807): 400 validación, 404 no encontrado, 409 CUIT duplicado.
+### Errores (`ProblemDetails`)
+
+Los errores salen en formato RFC 7807 (`title`, `status`, `detail`, y `errors` si hay campos inválidos):
+
+| HTTP | Cuándo |
+| --- | --- |
+| 400 | Validación (nombre/CUIT vacíos, CUIT con formato inválido, email inválido, estado no permitido) |
+| 404 | Cliente inexistente |
+| 409 | CUIT duplicado (también si cambia el formato: `20-28333444-5` o `20283334445`) |
+
+Ejemplo 409:
+
+```json
+{
+  "title": "Conflicto",
+  "status": 409,
+  "detail": "Ya existe un cliente con el mismo CUIT.",
+  "instance": "/api/clientes"
+}
+```
 
 ## Decisiones técnicas
 
-- Arquitectura en 3 capas (`Api`, `Application`, `Domain`, `Infrastructure`). Los controladores no contienen reglas de negocio.
-- SQLite para que el evaluador pueda clonar y correr sin servicios externos.
-- El asesor es un catálogo (`Asesores`) y no texto libre, para que el alta/edición use un selector. No hay ABM de asesores.
-- El CUIT se guarda como lo escribe el usuario y se normaliza a dígitos (`CuitNormalizado`) para el índice único.
-- Las gestiones son solo inserción. Nunca se editan ni se borran.
-- Un seguimiento está vencido si `ProximoContacto` es anterior a la fecha de hoy. El día de hoy no cuenta como vencido.
-- Fechas y horas se manejan en zona horaria de Argentina (`UTC-3` / `America/Argentina/Buenos_Aires`). La API las serializa con offset `-03:00`.
+- Arquitectura en capas (`Api` / `Application` / `Domain` / `Infrastructure`) para separar transporte, negocio y persistencia, sin Clean Architecture pesada.
+- SQLite para clonar y correr sin instalar un motor de base.
+- Asesor como catálogo (`Asesores`) + `GET /api/asesores`, no texto libre. No hay alta/edición de asesores.
+- CUIT visible como lo escribe el usuario; unicidad sobre `CuitNormalizado` (solo dígitos).
+- Gestiones de solo inserción: el historial no se edita ni se borra. Al registrar una, se actualizan estado, próximo contacto (si vino) y fecha de actualización del cliente.
+- Seguimiento vencido: `ProximoContacto` anterior a hoy. Hoy no cuenta como vencido.
 - `ProximoContacto` no se carga en el alta/edición del cliente: solo cambia al registrar una gestión.
 
-## Funcionalidades completadas
+## Funcionalidades
 
-- Listado de clientes con búsqueda, filtro por estado y orden por próximo contacto
+### Completadas (obligatorias)
+
+- Listado con búsqueda (nombre, CUIT, teléfono), filtro por estado y orden por próximo contacto
 - Alerta visual de seguimientos vencidos
 - Alta y edición de clientes
 - Registro de gestiones e historial cronológico
-- Panel de indicadores
-- Seed inicial (7 clientes, 4 asesores, gestiones y al menos un vencido)
+- Panel: total, prospectos, interesados, vencidos
+- Seed (7 clientes, 4 asesores, gestiones y al menos un vencido)
 - Tests de reglas de negocio
-- Swagger
+- Swagger y `docs/requests.http`
 
-## Funcionalidades pendientes
+### Pendientes (opcionales, a propósito)
 
-Quedaron fuera a propósito, porque el enunciado las marca como opcionales:
-
-- Paginación
-- Autenticación y roles
-- Kanban
-- Edición o baja de gestiones
-- Docker / deploy
+- Paginación, autenticación, Kanban, edición/baja de gestiones, Docker / deploy
 
 ## Problemas conocidos
 
-- La API se expone por HTTP en el puerto 5088 para evitar el paso extra del certificado de desarrollo.
-- El seed solo corre cuando la base está vacía. Si se quiere regenerar, hay que borrar `backend/src/MiniCrm.Api/minicrm.db` (y los `-wal`/`-shm` si existen) y volver a iniciar la API.
+- La API corre por HTTP en el puerto 5088 para no pedir el certificado de desarrollo.
+- El seed solo corre si la base está vacía.
 
 ## Uso de inteligencia artificial
 
 - **Herramientas:** Cursor (agente de código).
-- **Para qué se usó:** scaffolding de la solución, generación de boilerplate, formularios React y redacción del README.
-- **Partes asistidas:** estructura de proyectos, mapeo de DTOs, seed de datos de prueba y estilos Tailwind.
-- **Revisión personal:** modelo de datos, reglas de CUIT/gestiones, contratos de la API, validaciones, pruebas y flujo de pantallas.
-
-Durante la presentación se puede explicar cualquier parte del código entregado.
+- **Para qué se usó:** scaffolding de la solución, boilerplate, formularios React y redacción del README.
+- **Partes asistidas:** estructura de proyectos, DTOs, seed de prueba y estilos Tailwind.
+- **Revisión personal:** modelo de datos, reglas de CUIT y gestiones, contratos de la API, validaciones, pruebas, zona horaria y flujo de pantallas.
