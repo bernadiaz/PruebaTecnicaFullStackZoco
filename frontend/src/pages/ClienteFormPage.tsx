@@ -109,7 +109,7 @@ export function ClienteFormPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <Link to="/" className="text-sm text-indigo-700 hover:underline">
+        <Link to="/" className="text-sm text-green-700 hover:underline">
           Volver al listado
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">{isEdit ? "Editar cliente" : "Nuevo cliente"}</h1>
@@ -193,7 +193,7 @@ export function ClienteFormPage() {
           <button
             type="submit"
             disabled={saving}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
           >
             {saving ? "Guardando..." : "Guardar"}
           </button>

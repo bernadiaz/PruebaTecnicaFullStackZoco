@@ -24,12 +24,14 @@ public class ClienteService
         EstadoCliente? estado,
         int? asesorId = null,
         int page = 1,
+        bool soloEliminados = false,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Clientes
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(c => c.Asesor)
-            .AsQueryable();
+            .Where(c => c.Eliminado == soloEliminados);
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -87,6 +89,7 @@ public class ClienteService
     {
         var cliente = await _db.Clientes
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Include(c => c.Asesor)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
 
@@ -157,6 +160,49 @@ public class ClienteService
         return MapDetail(cliente);
     }
 
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var cliente = await _db.Clientes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (cliente is null || cliente.Eliminado)
+        {
+            throw new NotFoundException($"No se encontró el cliente {id}.");
+        }
+
+        var now = ArgentinaTime.Now;
+        cliente.Eliminado = true;
+        cliente.FechaEliminacion = now;
+        cliente.FechaActualizacion = now;
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<ClienteDetailDto> RestoreAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var cliente = await _db.Clientes
+            .IgnoreQueryFilters()
+            .Include(c => c.Asesor)
+            .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
+
+        if (cliente is null)
+        {
+            throw new NotFoundException($"No se encontró el cliente {id}.");
+        }
+
+        if (!cliente.Eliminado)
+        {
+            throw new BusinessValidationException("El cliente no está dado de baja.");
+        }
+
+        var now = ArgentinaTime.Now;
+        cliente.Eliminado = false;
+        cliente.FechaEliminacion = null;
+        cliente.FechaActualizacion = now;
+        await _db.SaveChangesAsync(cancellationToken);
+        return MapDetail(cliente);
+    }
+
     private static void ValidateCliente(
         string nombre,
         string cuit,
@@ -217,9 +263,12 @@ public class ClienteService
 
     private async Task EnsureCuitIsUniqueAsync(string cuitNormalizado, int? excludeId, CancellationToken cancellationToken)
     {
-        var exists = await _db.Clientes.AnyAsync(
-            c => c.CuitNormalizado == cuitNormalizado && (!excludeId.HasValue || c.Id != excludeId.Value),
-            cancellationToken);
+        var exists = await _db.Clientes
+            .IgnoreQueryFilters()
+            .AnyAsync(
+                c => c.CuitNormalizado == cuitNormalizado
+                     && (!excludeId.HasValue || c.Id != excludeId.Value),
+                cancellationToken);
 
         if (exists)
         {
@@ -254,7 +303,8 @@ public class ClienteService
         cliente.Asesor.Nombre,
         cliente.ProximoContacto,
         cliente.FechaActualizacion,
-        SeguimientoRules.EstaVencido(cliente.ProximoContacto));
+        SeguimientoRules.EstaVencido(cliente.ProximoContacto),
+        cliente.Eliminado);
 
     private static ClienteDetailDto MapDetail(Cliente cliente) => new(
         cliente.Id,
@@ -269,5 +319,6 @@ public class ClienteService
         cliente.ProximoContacto,
         cliente.FechaCreacion,
         cliente.FechaActualizacion,
-        SeguimientoRules.EstaVencido(cliente.ProximoContacto));
+        SeguimientoRules.EstaVencido(cliente.ProximoContacto),
+        cliente.Eliminado);
 }

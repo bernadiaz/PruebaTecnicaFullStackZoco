@@ -24,9 +24,10 @@ public class ClientesController : ControllerBase
         [FromQuery] EstadoCliente? estado,
         [FromQuery] int? asesorId = null,
         [FromQuery] int page = 1,
+        [FromQuery] bool soloEliminados = false,
         CancellationToken cancellationToken = default)
     {
-        return Ok(await _clientes.ListAsync(search, estado, asesorId, page, cancellationToken));
+        return Ok(await _clientes.ListAsync(search, estado, asesorId, page, soloEliminados, cancellationToken));
     }
 
     [HttpGet("{id:int}")]
@@ -51,6 +52,19 @@ public class ClientesController : ControllerBase
         CancellationToken cancellationToken)
     {
         return Ok(await _clientes.UpdateAsync(id, request, cancellationToken));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+    {
+        await _clientes.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("{id:int}/restaurar")]
+    public async Task<ActionResult<ClienteDetailDto>> Restaurar(int id, CancellationToken cancellationToken)
+    {
+        return Ok(await _clientes.RestoreAsync(id, cancellationToken));
     }
 
     [HttpGet("{id:int}/gestiones")]

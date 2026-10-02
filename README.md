@@ -89,10 +89,12 @@ Los controladores no contienen reglas: delegan en servicios (`ClienteService`, `
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/api/clientes` | Listado paginado (5 por página). Query: `search`, `estado`, `asesorId`, `page`. Orden por próximo contacto |
+| GET | `/api/clientes` | Listado paginado (5 por página). Query: `search`, `estado`, `asesorId`, `page`, `soloEliminados` |
 | GET | `/api/clientes/{id}` | Detalle. 404 si no existe |
 | POST | `/api/clientes` | Alta |
 | PUT | `/api/clientes/{id}` | Edición |
+| DELETE | `/api/clientes/{id}` | Baja lógica (204). El registro permanece en la base |
+| POST | `/api/clientes/{id}/restaurar` | Reactiva un cliente dado de baja |
 | GET | `/api/clientes/{id}/gestiones` | Historial, más reciente primero |
 | POST | `/api/clientes/{id}/gestiones` | Nueva gestión y actualización del cliente |
 | GET | `/api/dashboard/resumen` | Totales del panel |
@@ -126,6 +128,7 @@ Ejemplo 409:
 - Asesor como catálogo (`Asesores`) + `GET /api/asesores`, no texto libre. No hay alta/edición de asesores.
 - CUIT visible como lo escribe el usuario; unicidad sobre `CuitNormalizado` (solo dígitos).
 - Gestiones de solo inserción: el historial no se edita ni se borra. Al registrar una, se actualizan estado, próximo contacto (si vino) y fecha de actualización del cliente.
+- Baja lógica de clientes: se marca `Eliminado` y deja de aparecer en listado, detalle operativo e indicadores. Se puede reactivar con `POST /api/clientes/{id}/restaurar` o desde el filtro **Ver dados de baja**. El CUIT sigue ocupado mientras está dado de baja.
 - Seguimiento vencido: `ProximoContacto` anterior a hoy. Hoy no cuenta como vencido.
 - `ProximoContacto` no se carga en el alta/edición del cliente: solo cambia al registrar una gestión.
 
@@ -147,6 +150,7 @@ Ejemplo 409:
 #### Opcionales
 - Paginación
 - Filtro de Clientes por Asesor responsable
+- Baja lógica de clientes y reactivación de clientes dados de baja
 
 ### Pendientes (opcionales)
 

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using MiniCrm.Application.DTOs;
 using Xunit;
 using MiniCrm.Application.Exceptions;
@@ -136,5 +137,41 @@ public class ClienteServiceTests
         filtered.TotalCount.Should().Be(1);
         filtered.Items.Should().ContainSingle(c => c.Nombre == "Cliente de Laura" && c.AsesorId == fixture.Asesor.Id);
         all.TotalCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_HidesClienteFromListAndDetail()
+    {
+        using var fixture = new SqliteTestContext();
+        var service = new ClienteService(fixture.Db);
+        var created = await service.CreateAsync(new CrearClienteRequest(
+            "Cliente a dar de baja",
+            "20-33333333-3",
+            "3814003333",
+            null,
+            EstadoCliente.Prospecto,
+            fixture.Asesor.Id));
+
+        await service.DeleteAsync(created.Id);
+
+        var activos = await service.ListAsync(null, null);
+        activos.TotalCount.Should().Be(0);
+
+        var bajas = await service.ListAsync(null, null, soloEliminados: true);
+        bajas.TotalCount.Should().Be(1);
+        bajas.Items.Should().ContainSingle(c => c.Id == created.Id && c.Eliminado);
+
+        var detalleBaja = await service.GetByIdAsync(created.Id);
+        detalleBaja.Eliminado.Should().BeTrue();
+
+        var actAgain = async () => await service.DeleteAsync(created.Id);
+        await actAgain.Should().ThrowAsync<NotFoundException>();
+
+        var restored = await service.RestoreAsync(created.Id);
+        restored.Eliminado.Should().BeFalse();
+
+        var activosOtraVez = await service.ListAsync(null, null);
+        activosOtraVez.TotalCount.Should().Be(1);
+        activosOtraVez.Items.Should().ContainSingle(c => c.Id == created.Id && !c.Eliminado);
     }
 }

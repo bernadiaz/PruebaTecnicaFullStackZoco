@@ -33,10 +33,17 @@ public class GestionService
 
     public async Task<GestionDto> RegisterAsync(int clienteId, CrearGestionRequest request, CancellationToken cancellationToken = default)
     {
-        var cliente = await _db.Clientes.FirstOrDefaultAsync(c => c.Id == clienteId, cancellationToken);
+        var cliente = await _db.Clientes
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == clienteId, cancellationToken);
         if (cliente is null)
         {
             throw new NotFoundException($"No se encontró el cliente {clienteId}.");
+        }
+
+        if (cliente.Eliminado)
+        {
+            throw new BusinessValidationException("El cliente está dado de baja. Reactivalo para registrar gestiones.");
         }
 
         ValidateGestion(request);
@@ -66,8 +73,11 @@ public class GestionService
 
     private async Task EnsureClienteExistsAsync(int clienteId, CancellationToken cancellationToken)
     {
-        var exists = await _db.Clientes.AnyAsync(c => c.Id == clienteId, cancellationToken);
-        if (!exists)
+        var cliente = await _db.Clientes
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == clienteId, cancellationToken);
+        if (cliente is null)
         {
             throw new NotFoundException($"No se encontró el cliente {clienteId}.");
         }

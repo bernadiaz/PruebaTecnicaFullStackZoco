@@ -6,7 +6,7 @@ export function Layout() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="text-lg font-semibold tracking-tight text-slate-900">
-            Mini CRM
+            Mini CRM 
           </Link>
           <nav className="flex items-center gap-3">
             <NavLink
@@ -19,7 +19,7 @@ export function Layout() {
             </NavLink>
             <Link
               to="/clientes/nuevo"
-              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+              className="rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
             >
               Nuevo cliente
             </Link>

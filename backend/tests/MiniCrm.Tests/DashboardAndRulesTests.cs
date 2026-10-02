@@ -56,4 +56,41 @@ public class DashboardAndRulesTests
         resumen.Interesados.Should().Be(1);
         resumen.SeguimientosVencidos.Should().Be(1);
     }
+
+    [Fact]
+    public async Task GetResumenAsync_IgnoresLogicallyDeletedClientes()
+    {
+        using var fixture = new SqliteTestContext();
+        fixture.Db.Clientes.AddRange(
+            new Cliente
+            {
+                Nombre = "Activo",
+                Cuit = "20-11111111-1",
+                CuitNormalizado = "20111111111",
+                Telefono = "111",
+                Estado = EstadoCliente.Prospecto,
+                AsesorId = fixture.Asesor.Id,
+                FechaCreacion = DateTime.UtcNow,
+                FechaActualizacion = DateTime.UtcNow
+            },
+            new Cliente
+            {
+                Nombre = "Dado de baja",
+                Cuit = "20-22222222-2",
+                CuitNormalizado = "20222222222",
+                Telefono = "222",
+                Estado = EstadoCliente.Prospecto,
+                AsesorId = fixture.Asesor.Id,
+                Eliminado = true,
+                FechaEliminacion = DateTime.UtcNow,
+                FechaCreacion = DateTime.UtcNow,
+                FechaActualizacion = DateTime.UtcNow
+            });
+        await fixture.Db.SaveChangesAsync();
+
+        var resumen = await new DashboardService(fixture.Db).GetResumenAsync();
+
+        resumen.TotalClientes.Should().Be(1);
+        resumen.Prospectos.Should().Be(1);
+    }
 }

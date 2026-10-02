@@ -17,6 +17,9 @@ public class ClienteConfiguration : IEntityTypeConfiguration<Cliente>
         builder.Property(x => x.Telefono).HasMaxLength(50).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(200);
         builder.Property(x => x.Estado).HasConversion<string>().HasMaxLength(30).IsRequired();
+        builder.Property(x => x.Eliminado).HasDefaultValue(false);
+        builder.HasIndex(x => x.Eliminado);
+        builder.HasQueryFilter(x => !x.Eliminado);
         builder.HasOne(x => x.Asesor)
             .WithMany(x => x.Clientes)
             .HasForeignKey(x => x.AsesorId)
