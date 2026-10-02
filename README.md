@@ -62,7 +62,7 @@ La cadena de conexión está en `backend/src/MiniCrm.Api/appsettings.json`:
 }
 ```
 
-El archivo `minicrm.db` se genera en la carpeta de ejecución de la API y no se versiona.
+El archivo se crea en `backend/src/MiniCrm.Api/minicrm.db` y no se versiona. En Cursor/Visual Studio no aparece en el árbol porque `*.db` está en `.gitignore`; se ve en el Explorador de Windows o activando archivos excluidos.
 
 ### 3. Frontend
 
@@ -119,6 +119,7 @@ Errores en formato `ProblemDetails` (RFC 7807): 400 validación, 404 no encontra
 - El CUIT se guarda como lo escribe el usuario y se normaliza a dígitos (`CuitNormalizado`) para el índice único.
 - Las gestiones son solo inserción. Nunca se editan ni se borran.
 - Un seguimiento está vencido si `ProximoContacto` es anterior a la fecha de hoy. El día de hoy no cuenta como vencido.
+- Fechas y horas se manejan en zona horaria de Argentina (`UTC-3` / `America/Argentina/Buenos_Aires`). La API las serializa con offset `-03:00`.
 - `ProximoContacto` no se carga en el alta/edición del cliente: solo cambia al registrar una gestión.
 
 ## Funcionalidades completadas
@@ -145,7 +146,7 @@ Quedaron fuera a propósito, porque el enunciado las marca como opcionales:
 ## Problemas conocidos
 
 - La API se expone por HTTP en el puerto 5088 para evitar el paso extra del certificado de desarrollo.
-- El seed solo corre cuando la base está vacía. Si se quiere regenerar, hay que borrar `minicrm.db` y volver a iniciar la API.
+- El seed solo corre cuando la base está vacía. Si se quiere regenerar, hay que borrar `backend/src/MiniCrm.Api/minicrm.db` (y los `-wal`/`-shm` si existen) y volver a iniciar la API.
 
 ## Uso de inteligencia artificial
 

@@ -25,8 +25,8 @@ public static class DbSeeder
         db.Asesores.AddRange(asesores);
         await db.SaveChangesAsync(cancellationToken);
 
-        var hoy = DateTime.Today;
-        var creado = DateTime.UtcNow.AddDays(-20);
+        var hoy = ArgentinaTime.Today;
+        var creado = ArgentinaTime.Now.AddDays(-20);
 
         var clientes = new[]
         {
@@ -56,7 +56,7 @@ public static class DbSeeder
                 TipoContacto = TipoContacto.Llamada,
                 Comentario = "Primera llamada. Pidieron información de planes y volvieron a consultar precio.",
                 EstadoResultante = EstadoCliente.Prospecto,
-                FechaGestion = DateTime.UtcNow.AddDays(-8),
+                FechaGestion = ArgentinaTime.Now.AddDays(-8),
                 ProximoContacto = hoy.AddDays(-5)
             },
             new Gestion
@@ -65,7 +65,7 @@ public static class DbSeeder
                 TipoContacto = TipoContacto.Correo,
                 Comentario = "Enviamos propuesta comercial y confirmaron recepción.",
                 EstadoResultante = EstadoCliente.Contactado,
-                FechaGestion = DateTime.UtcNow.AddDays(-3),
+                FechaGestion = ArgentinaTime.Now.AddDays(-3),
                 ProximoContacto = hoy.AddDays(4)
             },
             new Gestion
@@ -74,7 +74,7 @@ public static class DbSeeder
                 TipoContacto = TipoContacto.Reunion,
                 Comentario = "Reunión presencial. Mostraron interés en el plan intermedio.",
                 EstadoResultante = EstadoCliente.Interesado,
-                FechaGestion = DateTime.UtcNow.AddDays(-1),
+                FechaGestion = ArgentinaTime.Now.AddDays(-1),
                 ProximoContacto = hoy.AddDays(2)
             },
             new Gestion
@@ -83,7 +83,7 @@ public static class DbSeeder
                 TipoContacto = TipoContacto.WhatsApp,
                 Comentario = "Indicaron que por ahora no van a avanzar.",
                 EstadoResultante = EstadoCliente.NoInteresado,
-                FechaGestion = DateTime.UtcNow.AddDays(-6)
+                FechaGestion = ArgentinaTime.Now.AddDays(-6)
             },
             new Gestion
             {
@@ -91,7 +91,7 @@ public static class DbSeeder
                 TipoContacto = TipoContacto.Llamada,
                 Comentario = "Cerraron la operatoria. Cliente activo.",
                 EstadoResultante = EstadoCliente.Cliente,
-                FechaGestion = DateTime.UtcNow.AddDays(-10),
+                FechaGestion = ArgentinaTime.Now.AddDays(-10),
                 ProximoContacto = hoy.AddDays(15)
             },
             new Gestion
@@ -100,7 +100,7 @@ public static class DbSeeder
                 TipoContacto = TipoContacto.Otro,
                 Comentario = "Visita al taller. Quedó pendiente recontacto y no respondieron.",
                 EstadoResultante = EstadoCliente.Contactado,
-                FechaGestion = DateTime.UtcNow.AddDays(-4),
+                FechaGestion = ArgentinaTime.Now.AddDays(-4),
                 ProximoContacto = hoy.AddDays(-2)
             },
             new Gestion
@@ -109,7 +109,7 @@ public static class DbSeeder
                 TipoContacto = TipoContacto.WhatsApp,
                 Comentario = "Recordatorio de la propuesta enviada. Coordinar nueva llamada.",
                 EstadoResultante = EstadoCliente.Contactado,
-                FechaGestion = DateTime.UtcNow.AddDays(-1),
+                FechaGestion = ArgentinaTime.Now.AddDays(-1),
                 ProximoContacto = hoy.AddDays(4)
             });
 

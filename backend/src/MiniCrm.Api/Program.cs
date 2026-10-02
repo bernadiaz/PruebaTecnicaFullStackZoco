@@ -2,12 +2,16 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using MiniCrm.Api.ExceptionHandling;
+using MiniCrm.Api.Serialization;
 using MiniCrm.Application;
 using MiniCrm.Infrastructure;
 using MiniCrm.Infrastructure.Data;
 using MiniCrm.Infrastructure.Data.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var dbPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, "minicrm.db"));
+builder.Configuration["ConnectionStrings:Default"] = $"Data Source={dbPath}";
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -17,6 +21,8 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.Converters.Add(new ArgentinaDateTimeConverter());
+        options.JsonSerializerOptions.Converters.Add(new ArgentinaNullableDateTimeConverter());
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 builder.Services.AddEndpointsApiExplorer();
@@ -51,5 +57,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
     await DbSeeder.SeedAsync(db);
 }
+
+app.Logger.LogInformation("Base SQLite: {DbPath}", dbPath);
 
 app.Run();

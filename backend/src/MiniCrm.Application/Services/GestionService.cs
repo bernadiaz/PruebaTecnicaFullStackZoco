@@ -41,7 +41,7 @@ public class GestionService
 
         ValidateGestion(request);
 
-        var now = DateTime.UtcNow;
+        var now = ArgentinaTime.Now;
         var gestion = new Gestion
         {
             ClienteId = clienteId,

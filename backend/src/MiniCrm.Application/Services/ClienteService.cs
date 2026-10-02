@@ -75,7 +75,7 @@ public class ClienteService
         var cuitNormalizado = CuitNormalizer.Normalize(request.Cuit);
         await EnsureCuitIsUniqueAsync(cuitNormalizado, excludeId: null, cancellationToken);
 
-        var now = DateTime.UtcNow;
+        var now = ArgentinaTime.Now;
         var cliente = new Cliente
         {
             Nombre = request.Nombre.Trim(),
@@ -120,7 +120,7 @@ public class ClienteService
         cliente.Estado = request.Estado;
         cliente.AsesorId = asesor.Id;
         cliente.Asesor = asesor;
-        cliente.FechaActualizacion = DateTime.UtcNow;
+        cliente.FechaActualizacion = ArgentinaTime.Now;
 
         await SaveSafelyAsync(cancellationToken);
         return MapDetail(cliente);
