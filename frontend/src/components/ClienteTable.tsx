@@ -49,7 +49,7 @@ export function ClienteTable({
               }
             >
               <td className="px-4 py-3">
-                <Link to={`/clientes/${cliente.id}`} className="font-medium text-indigo-700 hover:underline">
+                <Link to={`/clientes/${cliente.id}`} className="font-medium text-blue-900 hover:underline">
                   {cliente.nombre}
                 </Link>
                 {cliente.eliminado && (
