@@ -29,12 +29,12 @@ public class ClienteService
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var term = search.Trim();
+            var term = search.Trim().ToLower();
             var normalized = CuitNormalizer.Normalize(term);
             query = query.Where(c =>
-                c.Nombre.Contains(term) ||
-                c.Cuit.Contains(term) ||
-                c.Telefono.Contains(term) ||
+                c.Nombre.ToLower().Contains(term) ||
+                c.Cuit.ToLower().Contains(term) ||
+                c.Telefono.ToLower().Contains(term) ||
                 (!string.IsNullOrEmpty(normalized) && c.CuitNormalizado.Contains(normalized)));
         }
 

@@ -48,4 +48,26 @@ public class ClienteServiceTests
 
         await act.Should().ThrowAsync<BusinessValidationException>();
     }
+
+    [Fact]
+    public async Task ListAsync_SearchIsCaseInsensitive()
+    {
+        using var fixture = new SqliteTestContext();
+        var service = new ClienteService(fixture.Db);
+        await service.CreateAsync(new CrearClienteRequest(
+            "TechSur SRL",
+            "30-71234567-8",
+            "3814550202",
+            "contacto@techsur.com",
+            EstadoCliente.Prospecto,
+            fixture.Asesor.Id));
+
+        var lower = await service.ListAsync("tech", null);
+        var upper = await service.ListAsync("TECH", null);
+        var mixed = await service.ListAsync("TeChSur", null);
+
+        lower.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
+        upper.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
+        mixed.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
+    }
 }
