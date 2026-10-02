@@ -11,20 +11,28 @@ import { ESTADOS } from "../types";
 export function HomePage() {
   const [search, setSearch] = useState("");
   const [estado, setEstado] = useState<EstadoCliente | "">("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
   const [clientes, setClientes] = useState<ClienteListItem[]>([]);
   const [resumen, setResumen] = useState<DashboardResumen | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  async function load(nextSearch = search, nextEstado = estado) {
+  async function load(nextSearch = search, nextEstado = estado, nextPage = page) {
     setLoading(true);
     setError(null);
     try {
       const [lista, metrics] = await Promise.all([
-        getClientes(nextSearch, nextEstado),
+        getClientes(nextSearch, nextEstado, nextPage),
         getResumen()
       ]);
-      setClientes(lista);
+      setClientes(lista.items);
+      setPage(lista.page);
+      setPageSize(lista.pageSize);
+      setTotalCount(lista.totalCount);
+      setTotalPages(lista.totalPages);
       setResumen(metrics);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "No se pudo cargar el listado.");
@@ -40,8 +48,12 @@ export function HomePage() {
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
-    void load();
+    setPage(1);
+    void load(search, estado, 1);
   }
+
+  const rangeStart = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, totalCount);
 
   return (
     <div className="space-y-6">
@@ -91,7 +103,37 @@ export function HomePage() {
       {loading ? (
         <Alert variant="info">Cargando clientes...</Alert>
       ) : (
-        <ClienteTable clientes={clientes} />
+        <>
+          <ClienteTable clientes={clientes} />
+          {totalCount > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm text-slate-600">
+                Mostrando {rangeStart}–{rangeEnd} de {totalCount}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => void load(search, estado, page - 1)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Anterior
+                </button>
+                <span className="text-sm text-slate-600">
+                  Página {page} de {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => void load(search, estado, page + 1)}
+                  className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,14 +1,15 @@
 import type {
   ClienteDetail,
-  ClienteListItem,
   ClientePayload,
   EstadoCliente,
   Gestion,
-  GestionPayload
+  GestionPayload,
+  PagedResult,
+  ClienteListItem
 } from "../types";
 import { http } from "./http";
 
-export function getClientes(search?: string, estado?: EstadoCliente | "") {
+export function getClientes(search?: string, estado?: EstadoCliente | "", page = 1) {
   const params = new URLSearchParams();
   if (search?.trim()) {
     params.set("search", search.trim());
@@ -16,8 +17,8 @@ export function getClientes(search?: string, estado?: EstadoCliente | "") {
   if (estado) {
     params.set("estado", estado);
   }
-  const query = params.toString();
-  return http.get<ClienteListItem[]>(`/clientes${query ? `?${query}` : ""}`);
+  params.set("page", String(page));
+  return http.get<PagedResult<ClienteListItem>>(`/clientes?${params.toString()}`);
 }
 
 export function getCliente(id: number) {

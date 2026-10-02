@@ -89,7 +89,7 @@ Los controladores no contienen reglas: delegan en servicios (`ClienteService`, `
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/api/clientes` | Listado. Query: `search`, `estado`. Orden por próximo contacto |
+| GET | `/api/clientes` | Listado paginado (5 por página). Query: `search`, `estado`, `page`. Orden por próximo contacto |
 | GET | `/api/clientes/{id}` | Detalle. 404 si no existe |
 | POST | `/api/clientes` | Alta |
 | PUT | `/api/clientes/{id}` | Edición |
@@ -131,9 +131,11 @@ Ejemplo 409:
 
 ## Funcionalidades
 
-### Completadas (obligatorias)
+### Completadas 
 
-- Listado con búsqueda (nombre, CUIT, teléfono), filtro por estado y orden por próximo contacto
+#### Obligatorias
+
+- Listado con búsqueda (nombre, CUIT, teléfono), filtro por estado, orden por próximo contacto y paginación de 5 registros
 - Alerta visual de seguimientos vencidos
 - Alta y edición de clientes
 - Registro de gestiones e historial cronológico
@@ -142,9 +144,12 @@ Ejemplo 409:
 - Tests de reglas de negocio
 - Swagger y `docs/requests.http`
 
+#### Opcionales
+- Paginación
+
 ### Pendientes (opcionales, a propósito)
 
-- Paginación, autenticación, Kanban, edición/baja de gestiones, Docker / deploy
+- Autenticación, Kanban, edición/baja de gestiones, Docker / deploy
 
 ## Problemas conocidos
 

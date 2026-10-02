@@ -10,6 +10,8 @@ namespace MiniCrm.Application.Services;
 
 public class ClienteService
 {
+    public const int PageSize = 5;
+
     private readonly IAppDbContext _db;
 
     public ClienteService(IAppDbContext db)
@@ -17,9 +19,10 @@ public class ClienteService
         _db = db;
     }
 
-    public async Task<IReadOnlyList<ClienteListItemDto>> ListAsync(
+    public async Task<PagedResult<ClienteListItemDto>> ListAsync(
         string? search,
         EstadoCliente? estado,
+        int page = 1,
         CancellationToken cancellationToken = default)
     {
         var query = _db.Clientes
@@ -43,13 +46,35 @@ public class ClienteService
             query = query.Where(c => c.Estado == estado.Value);
         }
 
+        if (page < 1)
+        {
+            page = 1;
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var totalPages = totalCount == 0
+            ? 0
+            : (int)Math.Ceiling(totalCount / (double)PageSize);
+
+        if (totalPages > 0 && page > totalPages)
+        {
+            page = totalPages;
+        }
+
         var clientes = await query
             .OrderBy(c => c.ProximoContacto == null)
             .ThenBy(c => c.ProximoContacto)
             .ThenBy(c => c.Nombre)
+            .Skip((page - 1) * PageSize)
+            .Take(PageSize)
             .ToListAsync(cancellationToken);
 
-        return clientes.Select(MapListItem).ToList();
+        return new PagedResult<ClienteListItemDto>(
+            clientes.Select(MapListItem).ToList(),
+            page,
+            PageSize,
+            totalCount,
+            totalPages);
     }
 
     public async Task<ClienteDetailDto> GetByIdAsync(int id, CancellationToken cancellationToken = default)

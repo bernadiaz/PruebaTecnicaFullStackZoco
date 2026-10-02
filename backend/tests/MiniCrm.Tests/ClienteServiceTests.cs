@@ -66,8 +66,42 @@ public class ClienteServiceTests
         var upper = await service.ListAsync("TECH", null);
         var mixed = await service.ListAsync("TeChSur", null);
 
-        lower.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
-        upper.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
-        mixed.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
+        lower.Items.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
+        upper.Items.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
+        mixed.Items.Should().ContainSingle(c => c.Nombre == "TechSur SRL");
+    }
+
+    [Fact]
+    public async Task ListAsync_ReturnsFiveClientsPerPage()
+    {
+        using var fixture = new SqliteTestContext();
+        var service = new ClienteService(fixture.Db);
+
+        for (var i = 1; i <= 6; i++)
+        {
+            await service.CreateAsync(new CrearClienteRequest(
+                $"Cliente {i:00}",
+                $"20{i:D8}1",
+                $"381400000{i}",
+                null,
+                EstadoCliente.Prospecto,
+                fixture.Asesor.Id));
+        }
+
+        var first = await service.ListAsync(null, null, page: 1);
+        var second = await service.ListAsync(null, null, page: 2);
+        var beyond = await service.ListAsync(null, null, page: 9);
+
+        first.PageSize.Should().Be(5);
+        first.TotalCount.Should().Be(6);
+        first.TotalPages.Should().Be(2);
+        first.Items.Select(c => c.Nombre).Should().Equal(
+            "Cliente 01", "Cliente 02", "Cliente 03", "Cliente 04", "Cliente 05");
+
+        second.Page.Should().Be(2);
+        second.Items.Select(c => c.Nombre).Should().Equal("Cliente 06");
+
+        beyond.Page.Should().Be(2);
+        beyond.Items.Should().ContainSingle(c => c.Nombre == "Cliente 06");
     }
 }

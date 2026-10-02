@@ -1,8 +1,11 @@
-### Listado de clientes
+### Listado de clientes (página 1, 5 registros)
 GET http://localhost:5088/api/clientes
 
+### Listado página 2
+GET http://localhost:5088/api/clientes?page=2
+
 ### Listado filtrado
-GET http://localhost:5088/api/clientes?search=Tech&estado=Contactado
+GET http://localhost:5088/api/clientes?search=Tech&estado=Contactado&page=1
 
 ### Detalle
 GET http://localhost:5088/api/clientes/1
