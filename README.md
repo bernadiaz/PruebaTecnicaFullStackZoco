@@ -68,7 +68,7 @@ cd backend
 dotnet test
 ```
 
-Cubren CUIT duplicado (con o sin guiones), actualización de estado y próximo contacto al registrar una gestión, y detección de seguimientos vencidos.
+Cubren CUIT duplicado (con o sin guiones), filtro por asesor, actualización de estado y próximo contacto al registrar una gestión, detección de seguimientos vencidos, y baja lógica / reactivación.
 
 ## Estructura
 
@@ -90,7 +90,7 @@ Los controladores no contienen reglas: delegan en servicios (`ClienteService`, `
 | Método | Ruta | Descripción |
 | --- | --- | --- |
 | GET | `/api/clientes` | Listado paginado (5 por página). Query: `search`, `estado`, `asesorId`, `page`, `soloEliminados` |
-| GET | `/api/clientes/{id}` | Detalle. 404 si no existe |
+| GET | `/api/clientes/{id}` | Detalle (incluye dados de baja). 404 si no existe |
 | POST | `/api/clientes` | Alta |
 | PUT | `/api/clientes/{id}` | Edición |
 | DELETE | `/api/clientes/{id}` | Baja lógica (204). El registro permanece en la base |
@@ -106,8 +106,8 @@ Los errores salen en formato RFC 7807 (`title`, `status`, `detail`, y `errors` s
 
 | HTTP | Cuándo |
 | --- | --- |
-| 400 | Validación (nombre/CUIT vacíos, CUIT con formato inválido, email inválido, estado no permitido) |
-| 404 | Cliente inexistente |
+| 400 | Validación (nombre/CUIT vacíos, CUIT con formato inválido, email inválido, estado no permitido, reactivar un cliente que no está dado de baja) |
+| 404 | Cliente inexistente o ya dado de baja (en DELETE) |
 | 409 | CUIT duplicado (también si cambia el formato: `20-28333444-5` o `20283334445`) |
 
 Ejemplo 409:
@@ -125,11 +125,15 @@ Ejemplo 409:
 
 - Arquitectura en capas (`Api` / `Application` / `Domain` / `Infrastructure`) para separar transporte, negocio y persistencia, sin Clean Architecture pesada.
 - SQLite para clonar y correr sin instalar un motor de base.
+- Fechas y “hoy” en zona horaria de Argentina (UTC-3). El vencimiento no depende de la hora del servidor en UTC.
 - Asesor como catálogo (`Asesores`) + `GET /api/asesores`, no texto libre. No hay alta/edición de asesores.
 - CUIT visible como lo escribe el usuario; unicidad sobre `CuitNormalizado` (solo dígitos).
+- Búsqueda insensible a mayúsculas/minúsculas (nombre, CUIT, teléfono). SQLite distingue mayúsculas en `Contains`, por eso se compara en minúsculas.
 - Gestiones de solo inserción: el historial no se edita ni se borra. Al registrar una, se actualizan estado, próximo contacto (si vino) y fecha de actualización del cliente.
-- Baja lógica de clientes: se marca `Eliminado` y deja de aparecer en listado, detalle operativo e indicadores. Se puede reactivar con `POST /api/clientes/{id}/restaurar` o desde el filtro **Ver dados de baja**. El CUIT sigue ocupado mientras está dado de baja.
-- Seguimiento vencido: `ProximoContacto` anterior a hoy. Hoy no cuenta como vencido.
+- Baja lógica de clientes: se marca `Eliminado` y deja de aparecer en el listado activo y en los indicadores. El detalle se puede abrir (con aviso) para reactivar. No se registran gestiones ni se edita mientras está dado de baja. El CUIT sigue ocupado.
+- Reactivación: `POST /api/clientes/{id}/restaurar`, botón en el detalle, o **Reactivar** en el listado. En el listado, tildar **Ver dados de baja** y pulsar **Filtrar**: recién ahí se carga esa vista y aparece la columna **Acciones**.
+- Los avisos de éxito (alta, baja, reactivación, gestión) se muestran una vez y no quedan al recargar la página (F5).
+- Seguimiento vencido: `ProximoContacto` anterior a hoy (Argentina). Hoy no cuenta como vencido.
 - `ProximoContacto` no se carga en el alta/edición del cliente: solo cambia al registrar una gestión.
 
 ## Funcionalidades
@@ -138,7 +142,7 @@ Ejemplo 409:
 
 #### Obligatorias
 
-- Listado con búsqueda (nombre, CUIT, teléfono), filtro por estado y por asesor, orden por próximo contacto y paginación de 5 registros
+- Listado con búsqueda (nombre, CUIT, teléfono; no distingue mayúsculas), filtro por estado y por asesor, orden por próximo contacto y paginación de 5 registros
 - Alerta visual de seguimientos vencidos
 - Alta y edición de clientes
 - Registro de gestiones e historial cronológico
@@ -150,7 +154,7 @@ Ejemplo 409:
 #### Opcionales
 - Paginación
 - Filtro de Clientes por Asesor responsable
-- Baja lógica de clientes y reactivación de clientes dados de baja
+- Baja lógica de clientes y reactivación 
 
 ### Pendientes (opcionales)
 
@@ -160,10 +164,11 @@ Ejemplo 409:
 
 - La API corre por HTTP en el puerto 5088 para no pedir el certificado de desarrollo.
 - El seed solo corre si la base está vacía.
+- Si `dotnet run` falla copiando DLLs (`MSB3027`), ya hay un `MiniCrm.Api` en ejecución. Cerrar ese proceso y volver a correr, o usar la instancia que ya está en el puerto 5088.
 
 ## Uso de inteligencia artificial
 
-- **Herramientas:** Cursor (agente de código).
+- **Herramientas:** Cursor (agente de código) con modelo Grok 4.7.
 - **Para qué se usó:** scaffolding de la solución, boilerplate, formularios React y redacción del README.
 - **Partes asistidas:** estructura de proyectos, DTOs, seed de prueba y estilos Tailwind.
 - **Revisión personal:** modelo de datos, reglas de CUIT y gestiones, contratos de la API, validaciones, pruebas, zona horaria y flujo de pantallas.
