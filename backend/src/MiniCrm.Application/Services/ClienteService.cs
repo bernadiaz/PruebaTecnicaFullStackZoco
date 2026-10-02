@@ -22,6 +22,7 @@ public class ClienteService
     public async Task<PagedResult<ClienteListItemDto>> ListAsync(
         string? search,
         EstadoCliente? estado,
+        int? asesorId = null,
         int page = 1,
         CancellationToken cancellationToken = default)
     {
@@ -44,6 +45,11 @@ public class ClienteService
         if (estado.HasValue)
         {
             query = query.Where(c => c.Estado == estado.Value);
+        }
+
+        if (asesorId.HasValue)
+        {
+            query = query.Where(c => c.AsesorId == asesorId.Value);
         }
 
         if (page < 1)

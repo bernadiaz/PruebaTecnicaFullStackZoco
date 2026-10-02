@@ -3,6 +3,7 @@ using MiniCrm.Application.DTOs;
 using Xunit;
 using MiniCrm.Application.Exceptions;
 using MiniCrm.Application.Services;
+using MiniCrm.Domain.Entities;
 using MiniCrm.Domain.Enums;
 
 namespace MiniCrm.Tests;
@@ -103,5 +104,37 @@ public class ClienteServiceTests
 
         beyond.Page.Should().Be(2);
         beyond.Items.Should().ContainSingle(c => c.Nombre == "Cliente 06");
+    }
+
+    [Fact]
+    public async Task ListAsync_FiltersByAsesorWhenRequested()
+    {
+        using var fixture = new SqliteTestContext();
+        var service = new ClienteService(fixture.Db);
+        var otro = new Asesor { Nombre = "Martín Álvarez" };
+        fixture.Db.Asesores.Add(otro);
+        await fixture.Db.SaveChangesAsync();
+
+        await service.CreateAsync(new CrearClienteRequest(
+            "Cliente de Laura",
+            "20-11111111-1",
+            "3814001111",
+            null,
+            EstadoCliente.Prospecto,
+            fixture.Asesor.Id));
+        await service.CreateAsync(new CrearClienteRequest(
+            "Cliente de Martín",
+            "20-22222222-2",
+            "3814002222",
+            null,
+            EstadoCliente.Prospecto,
+            otro.Id));
+
+        var filtered = await service.ListAsync(null, null, asesorId: fixture.Asesor.Id);
+        var all = await service.ListAsync(null, null);
+
+        filtered.TotalCount.Should().Be(1);
+        filtered.Items.Should().ContainSingle(c => c.Nombre == "Cliente de Laura" && c.AsesorId == fixture.Asesor.Id);
+        all.TotalCount.Should().Be(2);
     }
 }

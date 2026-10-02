@@ -22,10 +22,11 @@ public class ClientesController : ControllerBase
     public async Task<ActionResult<PagedResult<ClienteListItemDto>>> Get(
         [FromQuery] string? search,
         [FromQuery] EstadoCliente? estado,
+        [FromQuery] int? asesorId = null,
         [FromQuery] int page = 1,
         CancellationToken cancellationToken = default)
     {
-        return Ok(await _clientes.ListAsync(search, estado, page, cancellationToken));
+        return Ok(await _clientes.ListAsync(search, estado, asesorId, page, cancellationToken));
     }
 
     [HttpGet("{id:int}")]

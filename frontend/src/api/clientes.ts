@@ -9,13 +9,21 @@ import type {
 } from "../types";
 import { http } from "./http";
 
-export function getClientes(search?: string, estado?: EstadoCliente | "", page = 1) {
+export function getClientes(
+  search?: string,
+  estado?: EstadoCliente | "",
+  asesorId?: number | "",
+  page = 1
+) {
   const params = new URLSearchParams();
   if (search?.trim()) {
     params.set("search", search.trim());
   }
   if (estado) {
     params.set("estado", estado);
+  }
+  if (asesorId) {
+    params.set("asesorId", String(asesorId));
   }
   params.set("page", String(page));
   return http.get<PagedResult<ClienteListItem>>(`/clientes?${params.toString()}`);

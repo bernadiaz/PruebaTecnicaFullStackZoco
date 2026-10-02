@@ -7,6 +7,9 @@ GET http://localhost:5088/api/clientes?page=2
 ### Listado filtrado
 GET http://localhost:5088/api/clientes?search=Tech&estado=Contactado&page=1
 
+### Listado por asesor
+GET http://localhost:5088/api/clientes?asesorId=1
+
 ### Detalle
 GET http://localhost:5088/api/clientes/1
 
