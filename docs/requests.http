@@ -1,0 +1,60 @@
+### Listado de clientes (página 1, 5 registros)
+GET http://localhost:5088/api/clientes
+
+### Listado página 2
+GET http://localhost:5088/api/clientes?page=2
+
+### Listado filtrado
+GET http://localhost:5088/api/clientes?search=Tech&estado=Contactado&page=1
+
+### Listado por asesor
+GET http://localhost:5088/api/clientes?asesorId=1
+
+### Detalle
+GET http://localhost:5088/api/clientes/1
+
+### Alta
+POST http://localhost:5088/api/clientes
+Content-Type: application/json
+
+{
+  "nombre": "Nuevo Comercio SA",
+  "cuit": "30-12345678-9",
+  "telefono": "3814000000",
+  "email": "nuevo@comercio.com",
+  "estado": "Prospecto",
+  "asesorId": 1
+}
+
+### Edición
+PUT http://localhost:5088/api/clientes/1
+Content-Type: application/json
+
+{
+  "nombre": "Panadería El Trigal",
+  "cuit": "20-28333444-5",
+  "telefono": "3814550101",
+  "email": "trigal@correo.com",
+  "estado": "Prospecto",
+  "asesorId": 1
+}
+
+### Historial
+GET http://localhost:5088/api/clientes/1/gestiones
+
+### Nueva gestión
+POST http://localhost:5088/api/clientes/1/gestiones
+Content-Type: application/json
+
+{
+  "tipoContacto": "Llamada",
+  "comentario": "Seguimiento telefónico.",
+  "estadoResultante": "Contactado",
+  "proximoContacto": "2026-10-10"
+}
+
+### Resumen
+GET http://localhost:5088/api/dashboard/resumen
+
+### Asesores
+GET http://localhost:5088/api/asesores
